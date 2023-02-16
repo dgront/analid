@@ -1,0 +1,17 @@
+[package]
+name = "lidar"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+members = [ "analid" ]
+
+[dependencies]
+clap = { version = "3.1.18", features = ["derive"] }
+flate2 = "1.0"
+bioshell-statistics = { path = "../bioshell4/bioshell-statistics/" }
+analid = {path = "./analid"}
+
+[[bin]]
+name = "lidar"
+path = "src/lidar.rs"

@@ -1,0 +1,6 @@
+pkg/
+target/
+.idea/
+Cargo.lock
+*.pdb
+*.gz

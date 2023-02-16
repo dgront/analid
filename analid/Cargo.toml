@@ -1,0 +1,13 @@
+[package]
+name = "analid"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+flate2 = "1.0"
+bioshell-statistics = { path = "../../bioshell4/bioshell-statistics/" }
+getrandom = { version = "0.2", features = ["js"] }
+
+[dependencies.pyo3]
+version = "0.15.1"
+features = ["extension-module"]
