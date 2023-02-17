@@ -1,0 +1,18 @@
+[package]
+name = "analid-python"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "pyanalid"
+crate-type = ["cdylib"]
+
+[dependencies]
+#bioshell-statistics = { path = "../bioshell4/bioshell-statistics/" }
+analid = {path = "../../analid"}
+
+[dependencies.pyo3]
+version = "0.18.1"
+features = ["extension-module"]
+
+

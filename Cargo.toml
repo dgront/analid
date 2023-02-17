@@ -5,6 +5,7 @@ edition = "2021"
 
 [workspace]
 members = [ "analid" ]
+exclude = [ "bindings" ]
 
 [dependencies]
 clap = { version = "3.1.18", features = ["derive"] }

@@ -1,4 +1,6 @@
+use std::collections::hash_map::Keys;
 use std::collections::HashMap;
+use std::fmt::{Display, Formatter};
 use std::io::{BufReader, BufRead, Write};
 use std::fs::File;
 use flate2::read::GzDecoder;
@@ -13,6 +15,52 @@ pub struct Point {
     pub z: f64,
 }
 
+impl Point {
+    /// Creates a new point from given coordinates
+    pub fn new(x: f64, y: f64, z: f64) -> Point { Point{x, y, z} }
+
+    pub fn from_csv(line:&str) -> Result<Point, String> {
+
+        let tokens: Vec<&str> = line.split(",").collect();
+        if tokens.len() == 3 {
+            let x = match tokens[0].parse::<f64>() {
+                Ok(v) => {v}
+                Err(_) => { return Err(format!("Can't parse: {} to float", tokens[0])); }
+            };
+            let y = match tokens[1].parse::<f64>() {
+                Ok(v) => {v}
+                Err(_) => {return Err(format!("Can't parse: {} to float", tokens[1]));}
+            };
+            let z = match tokens[2].parse::<f64>() {
+                Ok(v) => {v}
+                Err(_) => {return Err(format!("Can't parse: {} to float", tokens[2]));}
+            };
+            return Ok(Point{x, y, z});
+        }
+        return Err(format!("Can't parse line {} to Point", line));
+    }
+}
+
+impl Display for Point {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} {} {}", self.x, self.y, self.z)
+    }
+}
+
+pub struct PlotStatistics {
+    key: (i16,i16),
+    min: f64,
+    avg: f64,
+    max: f64,
+    mode: f64,
+    count: usize
+}
+
+impl Display for PlotStatistics {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({} {}) : {} {} {} {} {}", self.key.0, self.key.1, self.count, self.min, self.avg, self.max, self.mode)
+    }
+}
 
 /// 2D grid where all the measurements are split among small square plots
 #[derive(Clone)]
@@ -63,6 +111,30 @@ impl Grid {
         }
     }
 
+    pub fn plot_statistics(&self, key: &(i16, i16)) -> PlotStatistics {
+
+        let mut stats = OnlineMultivariateStatistics::new(1);
+        let mut h: Histogram = Histogram::by_bin_width(0.25);
+        let points =  self.data.get(key).unwrap();
+        for p in points {
+            h.insert(p.z);
+            stats.accumulate_1d(p.z);
+        }
+        let (mi, ma, v) = h.mode();
+        let mode: f64 = (mi + ma) / 2.0;
+
+        return PlotStatistics{key:(key.0, key.1), min: stats.min(0), avg: stats.avg(0), max: stats.max(0), mode, count: stats.count() };
+    }
+
+    pub fn keys(&self) -> Keys<'_, (i16, i16), Vec<Point>> {
+        self.data.keys()
+    }
+
+    pub fn data(&self) -> &HashMap<(i16,i16), Vec<Point>> { &self.data }
+
+    pub fn bounds(&self) -> &PlotBounds { &self.bounds }
+
+
     fn insert(&mut self, p: Point) {
         let key: (i16,i16) = self.hash(&p);
         if !self.data.contains_key(&key) {
@@ -80,10 +152,6 @@ impl Grid {
             self.insert(p.clone());
         }
     }
-
-    pub fn data(&self) -> &HashMap<(i16,i16), Vec<Point>> { &self.data }
-
-    pub fn bounds(&self) -> &PlotBounds { &self.bounds }
 }
 
 /// Describe position of a single plot
@@ -124,36 +192,34 @@ impl PlotBounds {
     pub fn width_y(&self) -> f64 { self.max_y - self.min_y }
 }
 
-pub fn read_points(fname: &str) -> Vec<Point> {
+fn read_points_from_buffer<T>(buffer: &mut T) -> Vec<Point> where T: BufRead {
 
     let mut out: Vec<Point> = vec![];
-
-    let file = File::open(fname).unwrap();
-    let file = BufReader::new(file);
-    let d = GzDecoder::new(file);
-
-    for line in BufReader::new(d).lines() {
-        let l = line.expect("");
-        let tokens: Vec<&str> = l.split(",").collect();
-        if tokens.len() == 3 {
-            let x = match tokens[0].parse::<f64>() {
-                Ok(v) => {v}
-                Err(_) => {continue}
-            };
-            let y = match tokens[1].parse::<f64>() {
-                Ok(v) => {v}
-                Err(_) => {continue}
-            };
-            let z = match tokens[2].parse::<f64>() {
-                Ok(v) => {v}
-                Err(_) => {continue}
-            };
-            let p = Point{x, y, z};
-            out.push(p);
+    for line in buffer.lines() {
+        let p = Point::from_csv(line.expect("").as_str());
+        match p {
+            Ok(point) => {out.push(point)}
+            Err(_) => {}
         }
     }
 
     return out;
+}
+
+
+pub fn read_points(fname: &str) -> Vec<Point> {
+
+    let file = File::open(fname).unwrap();
+    let mut file = BufReader::new(file);
+    return match fname.ends_with(".gz") {
+        true => {
+            let mut buff = BufReader::new(GzDecoder::new(file));
+            read_points_from_buffer(&mut buff)
+        }
+        false => {
+            read_points_from_buffer(&mut file)
+        }
+    };
 }
 
 /// Returns size for each plot of the given grid.
@@ -180,6 +246,7 @@ pub fn write_points(fname: String, points: &Vec<Point>) {
         writeln!(file, "{} {} {}", p.x, p.y, p.z);
     }
 }
+
 /// writes most populated bin
 // pub fn write_most_populated(n_boxes: usize, data: &Grid) {
 //     let key_by_size = plots_by_size(&data);
