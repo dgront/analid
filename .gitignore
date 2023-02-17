@@ -1,5 +1,7 @@
 pkg/
 target/
+venv-maturin/
+__pycache__/
 .idea/
 Cargo.lock
 *.pdb
