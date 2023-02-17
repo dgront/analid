@@ -48,12 +48,12 @@ impl Display for Point {
 }
 
 pub struct PlotStatistics {
-    key: (i16,i16),
-    min: f64,
-    avg: f64,
-    max: f64,
-    mode: f64,
-    count: usize
+    pub key: (i16,i16),
+    pub min: f64,
+    pub avg: f64,
+    pub max: f64,
+    pub mode: f64,
+    pub count: usize
 }
 
 impl Display for PlotStatistics {

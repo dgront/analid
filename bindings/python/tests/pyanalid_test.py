@@ -12,6 +12,9 @@ pts = pyanalid.read_points("p100.csv")
 
 grid = pyanalid.Grid(5.0, 5.0, pts)
 
+bounds = grid.bounds()
+print(f"{bounds.min_x} {bounds.max_x} {bounds.min_y} {bounds.max_y}")
+
 for k in grid.keys():
     stats = grid.plot_statistics(k)
     print(stats)

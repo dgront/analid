@@ -1,5 +1,7 @@
+
 use pyo3::prelude::*;
 use pyo3::exceptions::PyValueError;
+use pyo3::pymethods;
 
 use ::analid as rust_analid;
 
@@ -9,6 +11,23 @@ use ::analid as rust_analid;
 pub struct Point {
     inner: rust_analid::Point
 }
+
+#[pyclass]
+#[derive(Clone)]
+pub struct PlotBounds { inner: rust_analid::PlotBounds }
+
+#[pymethods]
+impl PlotBounds {
+    #[getter(min_x)]
+    fn min_x(&self) -> PyResult<f64> { Ok(self.inner.min_x) }
+    #[getter(min_y)]
+    fn min_y(&self) -> PyResult<f64> { Ok(self.inner.min_x) }
+    #[getter(max_x)]
+    fn max_x(&self) -> PyResult<f64> { Ok(self.inner.max_x) }
+    #[getter(max_y)]
+    fn max_y(&self) -> PyResult<f64> { Ok(self.inner.max_x) }
+}
+
 
 #[pymethods]
 impl Point {
@@ -33,6 +52,18 @@ pub struct PlotStatistics { inner: rust_analid::PlotStatistics }
 #[pymethods]
 impl PlotStatistics {
     fn __str__(&self) -> PyResult<String>   { Ok(format!("{}", self.inner)) }
+    #[getter(key)]
+    fn key(&self) -> PyResult<(i16,i16)> { Ok(self.inner.key) }
+    #[getter(min)]
+    fn min(&self) -> PyResult<f64> { Ok(self.inner.min) }
+    #[getter(max)]
+    fn max(&self) -> PyResult<f64> { Ok(self.inner.max) }
+    #[getter(mode)]
+    fn mode(&self) -> PyResult<f64> { Ok(self.inner.mode) }
+    #[getter(avg)]
+    fn avg(&self) -> PyResult<f64> { Ok(self.inner.avg) }
+    #[getter(count)]
+    fn count(&self) -> PyResult<usize> { Ok(self.inner.count) }
 }
 
 #[pyclass]
@@ -52,6 +83,8 @@ impl Grid {
     pub fn hash(&self, p:&Point) -> (i16,i16) { self.inner.hash(&p.inner) }
 
     pub fn count_points(&self, key: (i16, i16)) -> usize { self.inner.count_points(&key) }
+
+    pub fn bounds(&self) -> PlotBounds { PlotBounds{ inner: self.inner.bounds().clone() } }
 
     pub fn keys(&self) -> Vec<(i16, i16)> {
         let mut v = vec![];
