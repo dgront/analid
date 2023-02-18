@@ -1,7 +1,6 @@
-use std::collections::hash_map::Keys;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
-use std::io::{BufReader, BufRead, Write};
+use std::io::{BufReader, BufRead};
 use std::fs::File;
 use flate2::read::GzDecoder;
 
@@ -122,20 +121,27 @@ impl Grid {
             h.insert(p.z);
             stats.accumulate_1d(p.z);
         }
-        let (mi, ma, v) = h.mode();
+        let (mi, ma, _v) = h.mode();
         let mode: f64 = (mi + ma) / 2.0;
 
         return PlotStatistics{key:(key.0, key.1), min: stats.min(0), avg: stats.avg(0), max: stats.max(0), mode, count: stats.count() };
     }
 
-    pub fn keys(&self) -> Keys<'_, (i16, i16), Vec<Point>> {
-        self.data.keys()
+    /// Returns points observed for a field identified by a given key
+    ///
+    /// Points in the returned vector are sorted by their `z` coordinate
+    pub fn points(&self, key: &(i16,i16)) -> Option<&Vec<Point>> {
+        return self.data.get(key);
     }
 
+    /// Immutable access to the hashmap that stores all the [`Point`]s
     pub fn data(&self) -> &HashMap<(i16,i16), Vec<Point>> { &self.data }
 
+    /// Bounding area for all the measurements.
+    ///
+    /// The returned structure provides maximum and minimum `x` and `y` over all [`Points`]
+    /// measurements stored in this `Grid`
     pub fn bounds(&self) -> &PlotBounds { &self.bounds }
-
 
     fn insert(&mut self, p: Point) {
         let key: (i16,i16) = self.hash(&p);
@@ -150,8 +156,10 @@ impl Grid {
     }
 
     fn insert_all(&mut self, points: &Vec<Point>) {
-        for p in points {
-            self.insert(p.clone());
+        
+        points.iter().for_each(|p| self.insert(p.clone()));
+        for (_k, v) in self.data.iter_mut() {
+            v.sort_by(|pi, pj| pi.z.partial_cmp(&pj.z).unwrap());
         }
     }
 }

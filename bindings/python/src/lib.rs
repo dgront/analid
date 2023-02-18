@@ -87,6 +87,13 @@ impl Grid {
 
     pub fn bounds(&self) -> PlotBounds { PlotBounds{ inner: self.inner.bounds().clone() } }
 
+    pub fn points(&self, key: (i16,i16)) -> Vec<Point> {
+        match self.inner.points(&key) {
+            Some(pts) => { return rust_points_to_python(pts); }
+            None => { return vec![]; }
+        }
+    }
+
     pub fn keys(&self) -> Vec<(i16, i16)> {
         let mut v = vec![];
         for k in self.inner.data().keys() { v.push(k.clone()); }
@@ -101,12 +108,14 @@ impl Grid {
 
 #[pyfunction]
 pub fn read_points(fname: &str) -> Vec<Point> {
-    let mut ret: Vec<Point> = vec![];
-    for p in rust_analid::read_points(fname) {
-        ret.push(Point{ inner: p});
-    }
 
-    return ret;
+    rust_points_to_python(&rust_analid::read_points(fname))
+}
+
+/// Converts rust original [`Point`] objects into `pyanalid` `Point`s
+fn rust_points_to_python(rpoints: &Vec<rust_analid::Point>) -> Vec<Point> {
+
+    rpoints.iter().map(|x| Point{ inner: x.clone()}).collect()
 }
 
 /// LIDAR analysis module written in Rust
@@ -114,6 +123,8 @@ pub fn read_points(fname: &str) -> Vec<Point> {
 fn pyanalid(py: Python<'_>, module: &PyModule) -> PyResult<()> {
     module.add_class::<Point>()?;
     module.add_class::<Grid>()?;
+    module.add_class::<PlotStatistics>()?;
+    module.add_class::<PlotBounds>()?;
     module.add_function(wrap_pyfunction!(read_points, module)?)?;
     Ok(())
 }

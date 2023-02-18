@@ -2,7 +2,7 @@ use clap::{Parser};
 
 use bioshell_statistics::{Histogram, OnlineMultivariateStatistics};
 
-use analid::{Grid, PlotBounds, read_points, write_stats_for_bin};
+use analid::{Grid, read_points};
 
 #[derive(Parser, Debug)]
 #[clap(name = "lidar")]
@@ -22,7 +22,6 @@ fn main() {
     let args = Args::parse();
     let points = read_points(&args.infile);
     let grid: Grid = Grid::new(5.0, 5.0, points);
-    let range = grid.bounds();
 
     for (k, _v) in grid.data() {
         let stats = grid.plot_statistics(k);
