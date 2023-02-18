@@ -43,7 +43,7 @@ impl Point {
 
 impl Display for Point {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {} {}", self.x, self.y, self.z)
+        write!(f, "{},{},{}", self.x, self.y, self.z)
     }
 }
 
