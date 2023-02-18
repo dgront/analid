@@ -7,7 +7,7 @@ use flate2::read::GzDecoder;
 
 use bioshell_statistics::{Histogram, OnlineMultivariateStatistics};
 
-/// Single data point measured by a drone
+/// Single data point measured by LIDAR
 #[derive(Clone, Copy, Debug)]
 pub struct Point {
     pub x: f64,
@@ -19,6 +19,7 @@ impl Point {
     /// Creates a new point from given coordinates
     pub fn new(x: f64, y: f64, z: f64) -> Point { Point{x, y, z} }
 
+    /// Create a new [`Point`] by parsing data line in CSV format
     pub fn from_csv(line:&str) -> Result<Point, String> {
 
         let tokens: Vec<&str> = line.split(",").collect();
@@ -47,6 +48,7 @@ impl Display for Point {
     }
 }
 
+/// Statistics for a single plot i.e. square area fragment of a grid
 pub struct PlotStatistics {
     pub key: (i16,i16),
     pub min: f64,
@@ -240,36 +242,3 @@ pub fn plots_by_size(data: &Grid) -> Vec<((i16, i16), usize)> {
     return key_size;
 }
 
-pub fn write_points(fname: String, points: &Vec<Point>) {
-    let mut file =  File::create(fname).unwrap();
-    for p in points {
-        writeln!(file, "{} {} {}", p.x, p.y, p.z);
-    }
-}
-
-/// writes most populated bin
-// pub fn write_most_populated(n_boxes: usize, data: &Grid) {
-//     let key_by_size = plots_by_size(&data);
-//     for i in 0..n_boxes {
-//         let key = key_by_size[i].0;
-//         let size = key_by_size[i].1;
-//         let points_subset = &data.data()[&key];
-//         let r = PlotBounds::new(points_subset);
-//         write_points(format!("{}-{}", key.0, key.1),points_subset);
-//
-
-pub fn write_stats_for_bin(data: &Grid) {
-
-    for (key, points) in data.data().iter() {
-        let mut stats = OnlineMultivariateStatistics::new(1);
-        let mut h: Histogram = Histogram::by_bin_width(0.25);
-        for p in points {
-            h.insert(p.z);
-            stats.accumulate_1d(p.z);
-        }
-        let (mi, ma, v) = h.mode();
-        let mode: f64 = (mi + ma) / 2.0;
-        println!("{:3} {:3}  {:4}  {:7.2} {:7.2} {:7.2}   {:7.2} {:6.4}", key.0, key.1,
-                 stats.count(),  stats.min(0), stats.avg(0), stats.max(0), mode, v/h.sum());
-    }
-}

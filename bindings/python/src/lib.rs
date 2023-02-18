@@ -5,7 +5,7 @@ use pyo3::pymethods;
 
 use ::analid as rust_analid;
 
-
+/// Single data point measured by LIDAR
 #[pyclass]
 #[derive(Clone)]
 pub struct Point {
@@ -66,6 +66,7 @@ impl PlotStatistics {
     fn count(&self) -> PyResult<usize> { Ok(self.inner.count) }
 }
 
+/// 2D grid where all the measurements are split among small square plots
 #[pyclass]
 pub struct Grid { inner: rust_analid::Grid }
 

@@ -12,8 +12,8 @@ struct Args {
     /// staring conformation in the CSV format
     #[clap(short, long, default_value = "", short='f')]
     infile: String,
-    /// temperature of the simulation
-    #[clap(short, long, default_value_t = 10.0, short='w')]
+    /// plot size in meters
+    #[clap(short, long, default_value_t = 5.0, short='w')]
     bin_width: f64,
 }
 
@@ -23,13 +23,10 @@ fn main() {
     let points = read_points(&args.infile);
     let grid: Grid = Grid::new(5.0, 5.0, points);
     let range = grid.bounds();
-    // println!("{:?} -> {} x {}", range, range.width_x(),range.width_y());
 
-    // ---------- print observations counts per box
-    /*let key_by_size = largest_bins(&grid);
-    for (key, size) in key_by_size {
-            println!("{:?} : {}",key,size);
-    }*/
-    // ---------- print most probable height for each bin
-    write_stats_for_bin(&grid);
+    for (k, _v) in grid.data() {
+        let stats = grid.plot_statistics(k);
+        println!("{:3} {:3}  {:4}  {:7.2} {:7.2} {:7.2} {:7.2}", k.0, k.1,
+                 stats.count,  stats.min, stats.avg, stats.max, stats.mode);
+    }
 }
