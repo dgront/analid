@@ -16,3 +16,7 @@ analid = {path = "./analid"}
 [[bin]]
 name = "lidar"
 path = "src/lidar.rs"
+
+[[bin]]
+name = "filter"
+path = "src/filter.rs"
