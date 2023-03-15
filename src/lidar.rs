@@ -21,7 +21,8 @@ fn main() {
 
     let args = Args::parse();
     let points = read_points(&args.infile);
-    let grid: Grid = Grid::new(5.0, 5.0, points);
+    let bin_width = Args.bin_width;
+    let grid: Grid = Grid::new(bin_width, bin_width, points);
 
     for (k, _v) in grid.data() {
         let stats = grid.plot_statistics(k);
